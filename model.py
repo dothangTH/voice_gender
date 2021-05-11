@@ -1,6 +1,6 @@
 import librosa
 import librosa.display
-import joblib
+import pickle
 import numpy as np
 import scipy as sp
 import pandas as pd
@@ -17,10 +17,10 @@ from scipy.stats import mode
 class VoiceModel:
     def __init__(self, model_path='voicemodel.gz'):
         if os.path.exists(model_path):
-            self.model = joblib.load(model_path)
+            self.model = pickle.load(open(model_path, 'rb'))
         else:
             self.model = self.__train_model()
-            joblib.dump(self.model, model_path, compress=1)
+            pickle.dump(self.model, open(model_path, 'wb'))
 
     def __train_model(self):
         female_df = pd.read_csv('female.csv', index_col=0)
@@ -80,13 +80,11 @@ def create_time_frequency(sound, frame_size, hop_length, rate):
     return np.asarray(stft)
 
 
-def create_features(file):
+def create_features(sound, sr):
     X = pd.DataFrame()
     segment_id = 0
     FRAME_SIZE = 256
     HOP_LENGTH = 128
-
-    sound, sr = librosa.load(file)
 
     tf = create_time_frequency(sound, frame_size=FRAME_SIZE, hop_length=HOP_LENGTH, rate=sr)
     centroid = librosa.feature.spectral_centroid(sound, sr=sr, n_fft=FRAME_SIZE, hop_length=HOP_LENGTH).transpose()

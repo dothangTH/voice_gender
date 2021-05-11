@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File
 from pydantic import BaseModel
 from model import VoiceModel, create_features
-
+import librosa
 
 router = APIRouter(prefix='/gender')
 model = VoiceModel()
@@ -12,7 +12,8 @@ class Response(BaseModel):
 
 @router.post("/", response_model=Response)
 async def gender(file: UploadFile = File(...)):
-    features = create_features(file.filename)
+    data, sr = librosa.load(file.file)
+    features = create_features(data, sr)
     class_value = model.predict(features)
     class_name = model.get_target_name(class_value)
     return {"class_value": class_value, "class_name": class_name}
